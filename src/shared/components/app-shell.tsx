@@ -1,15 +1,8 @@
 import Link from "next/link";
-import { CalendarDays, CheckSquare2, CircleDollarSign, FileText, Gauge, Goal, NotebookText, Search, Settings2 } from "lucide-react";
+import { Gauge, Search } from "lucide-react";
 
 const navigation = [
-  { href: "/", label: "Inicio", icon: Gauge },
-  { href: "/tasks", label: "Tareas", icon: CheckSquare2 },
-  { href: "/projects", label: "Proyectos", icon: Goal },
-  { href: "/notes", label: "Notas", icon: NotebookText },
-  { href: "/documents", label: "Documentos", icon: FileText },
-  { href: "/calendar", label: "Calendario", icon: CalendarDays },
-  { href: "/finance", label: "Finanzas", icon: CircleDollarSign },
-  { href: "/settings", label: "Configuración", icon: Settings2 }
+  { href: "/", label: "Inicio", icon: Gauge }
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
