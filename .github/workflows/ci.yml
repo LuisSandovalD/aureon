@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: aureon
+          POSTGRES_USER: aureon
+          POSTGRES_PASSWORD: aureon
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aureon -d aureon"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://aureon:aureon@localhost:5432/aureon?schema=public
+      SESSION_SECRET: ci-only-not-a-production-secret-123456789
+      STORAGE_PATH: ./storage
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm install
+      - run: npm run db:generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build

@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum GoalCategory {
+  PERSONAL
+  PROFESSIONAL
+  FINANCIAL
+  LEARNING
+  HEALTH
+  OTHER
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  active       Boolean   @default(true)
+  tasks        Task[]
+  projects     Project[]
+  goals        Goal[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  startDate   DateTime?
+  dueDate     DateTime?
+  budget      Decimal?  @db.Decimal(14, 2)
+  archived    Boolean   @default(false)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  goals       Goal[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, archived])
+  @@index([dueDate])
+}
+
+model Task {
+  id               String      @id @default(cuid())
+  userId           String
+  projectId        String?
+  title            String
+  description      String?
+  status           TaskStatus  @default(TODO)
+  priority         Priority    @default(MEDIUM)
+  startAt          DateTime?
+  dueAt            DateTime?
+  estimatedMinutes Int?
+  actualMinutes    Int?
+  completedAt      DateTime?
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project          Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([userId, status, priority])
+  @@index([projectId])
+  @@index([dueAt])
+}
+
+model Goal {
+  id          String       @id @default(cuid())
+  userId      String
+  projectId   String?
+  title       String
+  description String?
+  category    GoalCategory @default(PERSONAL)
+  targetDate  DateTime?
+  progress    Int          @default(0)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId, category])
+  @@index([targetDate])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  requestId  String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+}
